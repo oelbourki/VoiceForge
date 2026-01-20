@@ -16,7 +16,7 @@ def create_header() -> gr.HTML:
             🎙️ VoiceForge
         </h1>
         <p style="font-size: 1.2em; color: #4a5568; margin-top: 0.5rem; font-weight: 500;">
-            Professional Voice Cloning & Text-to-Speech
+            Voice Cloning & Text-to-Speech
         </p>
         <p style="font-size: 0.95em; color: #718096; margin-top: 0.5rem;">
             Powered by <strong>NeuTTS Air</strong> • Transform text into natural speech with instant voice cloning

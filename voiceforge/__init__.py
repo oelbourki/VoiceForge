@@ -1,5 +1,5 @@
 """
-VoiceForge - Professional Voice Cloning Application
+VoiceForge - Voice Cloning Application
 A modern, modular text-to-speech system with instant voice cloning capabilities.
 
 Author: Otmane El Bourki <otmane.elbourki@gmail.com>

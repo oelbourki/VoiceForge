@@ -212,6 +212,7 @@ logs/
 Models/
 *.wav
 !samples/*.wav
+!assets/*.wav
 temp_output.wav
 
 # Editor and OS files

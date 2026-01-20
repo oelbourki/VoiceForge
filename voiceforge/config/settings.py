@@ -42,7 +42,7 @@ class PathConfig:
 class UIConfig:
     """UI configuration settings."""
     title: str = "VoiceForge"
-    subtitle: str = "Professional Voice Cloning & Text-to-Speech"
+    subtitle: str = "Voice Cloning & Text-to-Speech"
     server_name: str = "0.0.0.0"
     server_port: int = 7860
     share: bool = False

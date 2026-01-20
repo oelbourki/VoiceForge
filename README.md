@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Professional Voice Cloning & Text-to-Speech Application**
+**Voice Cloning & Text-to-Speech Application**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -10,7 +10,7 @@
 
 *Transform text into natural speech with instant voice cloning capabilities*
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Usage](#-usage) • [Documentation](#-documentation)
+[Features](#-features) • [Screenshots](#-screenshots--examples) • [Quick Start](#-quick-start) • [Usage](#-usage) • [Documentation](#-documentation)
 
 </div>
 
@@ -32,6 +32,29 @@ VoiceForge leverages [NeuTTS Air](https://neutts.org/), an open-source (Apache 2
 - **Multiple formats** - Supports PyTorch, GGML/GGUF, and ONNX
 
 Learn more: [neutts.org](https://neutts.org/) | [Hugging Face](https://huggingface.co/spaces/neuphonic/neutts-air) | [GitHub](https://github.com/neuphonic/neutts-air)
+
+## 📸 Screenshots & Examples
+
+### Application Interface
+
+<div align="center">
+  <img src="assets/voiceforge-screenshot.png" alt="VoiceForge Application Interface" width="800"/>
+  <p><em>VoiceForge Web Interface - Generate Speech Tab</em></p>
+</div>
+
+### Example: Elon Musk Voice Clone
+
+**Text Input:**
+> "When something is important enough, you do it even if the odds are not in your favor."
+
+**Generated Audio:**
+
+<audio controls>
+  <source src="assets/elonmusk.wav" type="audio/wav">
+  Your browser does not support the audio element.
+</audio>
+
+*Generated using the Elon Musk voice clone - 5 seconds, generated in 6.7 seconds*
 
 ## ✨ Features
 

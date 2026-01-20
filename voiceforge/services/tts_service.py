@@ -1,6 +1,7 @@
 """Text-to-Speech service for VoiceForge."""
 
 import time
+import uuid
 import numpy as np
 import torch
 import soundfile as sf
@@ -133,8 +134,22 @@ class TTSService:
                 indices = np.round(np.linspace(0, len(all_wav) - 1, target_length)).astype(int)
                 all_wav = all_wav[indices]
 
-            # Save the final audio
-            temp_path = self.settings.paths.temp_dir / "output.wav"
+            # Ensure temp directory exists
+            self.settings.paths.temp_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save the final audio with unique filename to avoid conflicts
+            unique_id = uuid.uuid4().hex[:8]
+            temp_path = self.settings.paths.temp_dir / f"output_{unique_id}.wav"
+            
+            # Ensure the audio data is in the correct format
+            if all_wav.dtype != np.float32:
+                all_wav = all_wav.astype(np.float32)
+            
+            # Normalize if needed to prevent clipping
+            max_val = np.abs(all_wav).max()
+            if max_val > 1.0:
+                all_wav = all_wav / max_val
+            
             sf.write(str(temp_path), all_wav, self.settings.model.sample_rate)
             
             # Calculate and show total time taken

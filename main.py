@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VoiceForge - Professional Voice Cloning Application
+VoiceForge - Voice Cloning Application
 Main entry point for the application.
 
 Author: Otmane El Bourki <otmane.elbourki@gmail.com>

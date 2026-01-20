@@ -1,3 +1,3 @@
 # VoiceForge
 
-Professional Voice Cloning & Text-to-Speech Application
+Voice Cloning & Text-to-Speech Application
