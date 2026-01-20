@@ -2,6 +2,8 @@
 """
 VoiceForge - Professional Voice Cloning Application
 Main entry point for the application.
+
+Author: Otmane El Bourki <otmane.elbourki@gmail.com>
 """
 
 import sys

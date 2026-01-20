@@ -1,18 +1,51 @@
 # 🎙️ VoiceForge
 
+<div align="center">
+
 **Professional Voice Cloning & Text-to-Speech Application**
 
-VoiceForge is a modern, professional-grade voice cloning and text-to-speech application built on NeuTTS Air. Transform text into natural speech with instant voice cloning capabilities, featuring a clean modular architecture and beautiful user interface.
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Gradio](https://img.shields.io/badge/Gradio-5.0+-orange.svg)](https://gradio.app/)
 
-## Features
+*Transform text into natural speech with instant voice cloning capabilities*
+
+[Features](#-features) • [Quick Start](#-quick-start) • [Usage](#-usage) • [Documentation](#-documentation)
+
+</div>
+
+---
+
+## 🌟 Overview
+
+VoiceForge is a modern, professional-grade voice cloning and text-to-speech application built on **NeuTTS Air** by Neuphonic. It provides an intuitive web interface for creating voice clones from just 3-15 seconds of reference audio and generating high-quality speech synthesis.
+
+### Powered by NeuTTS Air
+
+VoiceForge leverages [NeuTTS Air](https://neutts.org/), an open-source (Apache 2.0) on-device text-to-speech model that:
+
+- **Runs entirely on-device** - No cloud API required, ensuring data privacy
+- **Instant voice cloning** - Replicate voices from 3-15 seconds of reference audio
+- **Real-time performance** - Optimized for low-latency streaming
+- **Responsible AI** - Includes "Perth" watermarking for traceability
+- **0.5B parameter LLM** - Built on Qwen backbone with NeuCodec (50Hz neural audio codec)
+- **Multiple formats** - Supports PyTorch, GGML/GGUF, and ONNX
+
+Learn more: [neutts.org](https://neutts.org/) | [Hugging Face](https://huggingface.co/spaces/neuphonic/neutts-air) | [GitHub](https://github.com/neuphonic/neutts-air)
+
+## ✨ Features
 
 - 🎙️ **Instant Voice Cloning**: Clone any voice from 3-15 seconds of reference audio
 - 🚀 **GPU Acceleration**: CUDA support for fast inference (CPU fallback available)
-- 🌐 **Web Interface**: User-friendly Gradio interface
-- 📱 **On-Device**: Runs locally, no cloud API required
-- 🔒 **Watermarked**: All outputs include imperceptible watermarks
+- 🌐 **Modern Web Interface**: Beautiful, user-friendly Gradio interface
+- 📱 **On-Device Processing**: Runs locally, no cloud API required
+- 🔒 **Watermarked Outputs**: All generated audio includes imperceptible watermarks
+- 🏗️ **Modular Architecture**: Clean, maintainable codebase with separation of concerns
+- ⚙️ **Configurable**: Easy customization through settings
+- 📝 **Comprehensive Logging**: File and console logging for debugging
+- 🎨 **Professional UI**: Modern interface with VoiceForge branding
 
-## Requirements
+## 📋 Requirements
 
 ### System Requirements
 
@@ -26,7 +59,7 @@ VoiceForge is a modern, professional-grade voice cloning and text-to-speech appl
 
 - **eSpeak-ng**: For phonemization (text-to-phoneme conversion)
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 1. Install System Dependencies
 
@@ -46,7 +79,19 @@ sudo pacman -S espeak-ng python python-pip
 sudo dnf install espeak-ng espeak-ng-devel python3 python3-pip
 ```
 
-### 2. Run Setup Script
+**macOS:**
+```bash
+brew install espeak-ng
+```
+
+### 2. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/VoiceForge.git
+cd VoiceForge
+```
+
+### 3. Run Setup Script
 
 ```bash
 chmod +x setup_linux.sh
@@ -59,9 +104,9 @@ This will:
 - Install Python packages
 - Set up directories
 
-### 3. Run the Application
+### 4. Run the Application
 
-**Option 1: Using the run script**
+**Option 1: Using the run script (Recommended)**
 ```bash
 chmod +x run_neutts.sh
 ./run_neutts.sh
@@ -75,15 +120,17 @@ python main.py
 
 The web interface will open at `http://localhost:7860`
 
-## Usage
+> **Note**: First run will download models from HuggingFace (~2-4 GB). This may take 5-15 minutes depending on your connection.
+
+## 📖 Usage
 
 ### Cloning a Voice
 
-1. Go to the "Instantly Clone New Voice" tab
-2. Enter a name for your voice
+1. Go to the **"🧬 Clone Voice"** tab
+2. Enter a name for your voice (e.g., `my_voice`, `narrator`)
 3. Upload a reference audio file (`.wav` format, 3-15 seconds)
 4. Enter the exact text spoken in the audio
-5. Click "Clone Voice"
+5. Click **"🧬 Clone Voice"**
 
 **Reference Audio Requirements:**
 - Format: WAV
@@ -94,20 +141,20 @@ The web interface will open at `http://localhost:7860`
 
 ### Generating Speech
 
-1. Go to the "Generate Speech" tab
+1. Go to the **"🎤 Generate Speech"** tab
 2. Select a cloned voice from the dropdown
 3. Enter the text you want to synthesize
 4. Adjust speed (optional, 0.5x to 2.0x)
-5. Click "Generate Speech"
+5. Click **"🎙️ Generate Speech"**
 
 The system will:
-- Split long texts into chunks
+- Split long texts into chunks automatically
 - Generate audio for each chunk
 - Combine chunks with proper spacing
 - Apply speed adjustment
 - Return the final audio file
 
-## Project Structure
+## 🏗️ Project Structure
 
 VoiceForge features a professional, modular architecture:
 
@@ -120,18 +167,53 @@ VoiceForge/
 │   ├── services/           # Business logic (TTS, Voice management)
 │   ├── ui/                 # User interface components
 │   └── utils/              # Utilities (logging, system checks)
-├── neuttsair/              # Core TTS module
+├── neuttsair/              # Core TTS module (modularized)
+│   ├── config.py           # TTS configuration constants
+│   ├── audio_utils.py      # Audio processing utilities
+│   └── neutts.py           # Main NeuTTSAir class
 ├── samples/                # Voice samples directory
-├── Models/                 # Model cache
-├── temp/                   # Temporary files
-└── logs/                   # Application logs
+├── Models/                 # Model cache (auto-created)
+├── temp/                   # Temporary files (auto-created)
+└── logs/                   # Application logs (auto-created)
 ```
 
-For detailed structure information, see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md).
+## 🔧 Configuration
 
-**Note**: The `neuttsair` module is included in this repository. Make sure it's present in the project directory.
+### Custom Device Selection
 
-## Troubleshooting
+Edit `voiceforge/config/settings.py` to change device:
+
+```python
+model = ModelConfig(
+    backbone_device="cuda",  # or "cpu" or "auto"
+    codec_device="cuda"
+)
+```
+
+### Changing Port
+
+Edit `voiceforge/config/settings.py`:
+
+```python
+ui = UIConfig(
+    server_port=7861  # Change port number
+)
+```
+
+### Using Local Models
+
+Place models in `Models/neutts-air/` directory:
+```
+Models/
+└── neutts-air/
+    └── models--neuphonic--neutts-air/
+        └── snapshots/
+            └── [snapshot-hash]/
+                ├── config.json
+                └── ...
+```
+
+## 🐛 Troubleshooting
 
 ### eSpeak Not Found
 
@@ -188,41 +270,7 @@ which espeak-ng
 3. Ensure reference text matches audio exactly
 4. Check disk space
 
-## Advanced Configuration
-
-### Using Local Models
-
-Place models in `Models/neutts-air/` directory:
-```
-Models/
-└── neutts-air/
-    └── models--neuphonic--neutts-air/
-        └── snapshots/
-            └── [snapshot-hash]/
-                ├── config.json
-                └── ...
-```
-
-### Custom Device Selection
-
-Edit `voiceforge/config/settings.py` to change device:
-```python
-model = ModelConfig(
-    backbone_device="cuda",  # or "cpu" or "auto"
-    codec_device="cuda"
-)
-```
-
-### Changing Port
-
-Edit `voiceforge/config/settings.py`:
-```python
-ui = UIConfig(
-    server_port=7861  # Change port number
-)
-```
-
-## Performance Tips
+## 💡 Performance Tips
 
 1. **Use GPU**: Significantly faster than CPU
 2. **Pre-encode voices**: Saves `.pt` files for faster loading
@@ -230,43 +278,54 @@ ui = UIConfig(
 4. **Batch processing**: Process multiple texts in sequence
 5. **Monitor memory**: Close other applications when using GPU
 
-## Professional Features
+## 📚 Documentation
 
-- 🏗️ **Modular Architecture**: Clean separation of concerns, easy to maintain and extend
-- ⚙️ **Configuration Management**: Centralized settings, easy to customize
-- 📝 **Comprehensive Logging**: File and console logging for debugging and monitoring
-- 🎨 **Modern UI**: Professional interface with VoiceForge branding
-- 🔧 **Service Layer**: Reusable business logic, easy to test
-- 📚 **Type Hints**: Better IDE support and code clarity
-- 🛡️ **Error Handling**: Robust error handling with meaningful messages
+- [QUICK_START.md](QUICK_START.md) - Quick start guide
+- [TESTING.md](TESTING.md) - Testing guide
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- [AUTHORS.md](AUTHORS.md) - Project authors and contributors
 
-See [IMPROVEMENTS.md](IMPROVEMENTS.md) for detailed information about the professional improvements.
+## 🤝 Contributing
 
-## License
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-Same as original NeuTTS Air project. Please refer to the original repository for license information.
+## 📄 License
 
-## Credits
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- **Original Project**: [NeuTTS Air](https://github.com/neuphonic/neutts-air)
-- **Model**: Neuphonic
-- **VoiceForge**: Professional modular implementation
+### Third-Party Licenses
 
-## Documentation
+This project uses:
+- **NeuTTS Air** by Neuphonic - Apache 2.0 License
+- **NeuCodec** by Neuphonic - See their repository for license
+- **Perth Watermarking** by Resemble AI - See their repository for license
 
-- [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Detailed project structure
-- [IMPROVEMENTS.md](IMPROVEMENTS.md) - Professional improvements made
+Please refer to the original repositories for their license terms:
+- [NeuTTS Air](https://github.com/neuphonic/neutts-air)
+- [Neuphonic](https://www.neuphonic.com/)
 
-## Support
+## 🙏 Credits
 
-For issues specific to this Linux port, please check:
-1. System dependencies are installed
-2. Virtual environment is activated
-3. Python version is 3.11+
-4. CUDA is properly configured (if using GPU)
+- **Author**: Otmane El Bourki <otmane.elbourki@gmail.com>
+- **NeuTTS Air**: [Neuphonic](https://www.neuphonic.com/) - Open-source on-device TTS model
+- **VoiceForge**: Professional modular implementation and UI
 
-For general NeuTTS Air issues, refer to the [original repository](https://github.com/neuphonic/neutts-air).
+## 🔗 Links
+
+- **NeuTTS Air Official**: [neutts.org](https://neutts.org/)
+- **Hugging Face Space**: [neuphonic/neutts-air](https://huggingface.co/spaces/neuphonic/neutts-air)
+- **GitHub Repository**: [neuphonic/neutts-air](https://github.com/neuphonic/neutts-air)
+
+## ⭐ Star History
+
+If you find VoiceForge useful, please consider giving it a star! ⭐
 
 ---
 
-**Enjoy professional voice cloning with VoiceForge! 🎙️✨**
+<div align="center">
+
+**Made with ❤️ by Otmane El Bourki using NeuTTS Air**
+
+*Enjoy professional voice cloning with VoiceForge! 🎙️✨*
+
+</div>
