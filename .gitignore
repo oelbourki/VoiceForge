@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-docs/
+
 # Distribution / packaging
 .Python
 build/
@@ -209,6 +209,29 @@ __marimo__/
 # VoiceForge specific
 temp/
 logs/
+Models/
 *.wav
 !samples/*.wav
 temp_output.wav
+
+# Editor and OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Keep samples folder - all files in samples/ are tracked
+# samples/*.pt files (voice encodings)
+# samples/*.wav files (reference audio)
+# samples/*.txt files (reference text)
+docs/
+old/

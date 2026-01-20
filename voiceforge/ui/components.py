@@ -88,9 +88,9 @@ def create_generation_tab(
                 audio_output = gr.Audio(
                     label="Generated Audio",
                     autoplay=True,
-                    type="filepath",
-                    info="Generated speech audio will appear here"
+                    type="filepath"
                 )
+                gr.Markdown("<small><em>Generated speech audio will appear here</em></small>")
                 delete_status = gr.Textbox(label="Status", visible=False)
         
         # Event handlers will be attached in the main app
@@ -134,9 +134,9 @@ def create_clone_tab(voice_service, tts_service) -> gr.Tab:
                 )
                 ref_audio_input = gr.Audio(
                     label="Reference Audio",
-                    type="filepath",
-                    info="Upload a WAV file (3-15 seconds, clear audio, minimal background noise)"
+                    type="filepath"
                 )
+                gr.Markdown("<small><em>Upload a WAV file (3-15 seconds, clear audio, minimal background noise)</em></small>")
                 clone_btn = gr.Button(
                     "🧬 Clone Voice",
                     variant="primary",

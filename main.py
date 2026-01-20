@@ -11,6 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+import gradio as gr
 from voiceforge.config import get_settings
 from voiceforge.utils import setup_logger, check_espeak_installed
 from voiceforge.models import load_tts_model
@@ -71,12 +72,16 @@ def main():
     logger.info("=" * 60)
     logger.info("")
     
+    # Determine theme
+    theme = gr.themes.Soft() if settings.ui.theme == "soft" else gr.themes.Default()
+    
     app.launch(
         server_name=settings.ui.server_name,
         server_port=settings.ui.server_port,
         share=settings.ui.share,
         inbrowser=settings.ui.inbrowser,
         show_error=settings.ui.show_error,
+        theme=theme,
     )
 
 

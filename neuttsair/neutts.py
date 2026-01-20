@@ -1,3 +1,5 @@
+"""Main NeuTTSAir class - modularized from original implementation."""
+
 from typing import Generator
 from pathlib import Path
 import librosa
@@ -10,32 +12,13 @@ from phonemizer.backend import EspeakBackend
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer
 from threading import Thread
 
-
-def _linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
-    # original impl --> https://github.com/facebookresearch/encodec/blob/main/encodec/utils.py
-    assert len(frames)
-    dtype = frames[0].dtype
-    shape = frames[0].shape[:-1]
-
-    total_size = 0
-    for i, frame in enumerate(frames):
-        frame_end = stride * i + frame.shape[-1]
-        total_size = max(total_size, frame_end)
-
-    sum_weight = np.zeros(total_size, dtype=dtype)
-    out = np.zeros(*shape, total_size, dtype=dtype)
-
-    offset: int = 0
-    for frame in frames:
-        frame_length = frame.shape[-1]
-        t = np.linspace(0, 1, frame_length + 2, dtype=dtype)[1:-1]
-        weight = np.abs(0.5 - (t - 0.5))
-
-        out[..., offset : offset + frame_length] += weight * frame
-        sum_weight[offset : offset + frame_length] += weight
-        offset += stride
-    assert sum_weight.min() > 0
-    return out / sum_weight
+from .config import (
+    SAMPLE_RATE, MAX_CONTEXT, HOP_LENGTH,
+    STREAMING_OVERLAP_FRAMES, STREAMING_FRAMES_PER_CHUNK,
+    STREAMING_LOOKFORWARD, STREAMING_LOOKBACK,
+    get_streaming_stride_samples
+)
+from .audio_utils import linear_overlap_add
 
 
 class NeuTTSAir:
@@ -47,32 +30,28 @@ class NeuTTSAir:
         codec_repo="neuphonic/neucodec",
         codec_device="cpu",
     ):
+        # Constants from config
+        self.sample_rate = SAMPLE_RATE
+        self.max_context = MAX_CONTEXT
+        self.hop_length = HOP_LENGTH
+        self.streaming_overlap_frames = STREAMING_OVERLAP_FRAMES
+        self.streaming_frames_per_chunk = STREAMING_FRAMES_PER_CHUNK
+        self.streaming_lookforward = STREAMING_LOOKFORWARD
+        self.streaming_lookback = STREAMING_LOOKBACK
+        self.streaming_stride_samples = get_streaming_stride_samples()
 
-        # Consts
-        self.sample_rate = 24_000
-        self.max_context = 2048
-        self.hop_length = 480
-        self.streaming_overlap_frames = 1
-        self.streaming_frames_per_chunk = 25
-        self.streaming_lookforward = 5
-        self.streaming_lookback = 50
-        self.streaming_stride_samples = self.streaming_frames_per_chunk * self.hop_length
-
-        # ggml & onnx flags
+        # Model flags
         self._is_quantized_model = False
         self._is_onnx_codec = False
-
-        # HF tokenizer
         self.tokenizer = None
 
-        # Load phonemizer + models
+        # Load components
         print("Loading phonemizer...")
         self.phonemizer = EspeakBackend(
             language="en-us", preserve_punctuation=True, with_stress=True
         )
 
         self._load_backbone(backbone_repo, backbone_device)
-
         self._load_codec(codec_repo, codec_device)
 
         # Load watermarker
@@ -81,9 +60,7 @@ class NeuTTSAir:
     def _load_backbone(self, backbone_repo, backbone_device):
         print(f"Loading backbone from: {backbone_repo} on {backbone_device} ...")
 
-        # GGUF loading
         if backbone_repo.endswith("gguf"):
-
             try:
                 from llama_cpp import Llama
             except ImportError as e:
@@ -103,9 +80,7 @@ class NeuTTSAir:
                 flash_attn=True if backbone_device == "gpu" else False,
             )
             self._is_quantized_model = True
-
         else:
-            # If backbone_repo is a local directory, prefer local files only
             local_only = False
             try:
                 import os
@@ -113,7 +88,6 @@ class NeuTTSAir:
             except Exception:
                 local_only = False
 
-            # Pass local_files_only to avoid network access when using a local model
             self.tokenizer = AutoTokenizer.from_pretrained(backbone_repo, local_files_only=local_only)
             self.backbone = AutoModelForCausalLM.from_pretrained(
                 backbone_repo, local_files_only=local_only
@@ -124,7 +98,6 @@ class NeuTTSAir:
 
         print(f"Loading codec from: {codec_repo} on {codec_device} ...")
 
-        # ✅ Allow local directory override
         if os.path.isdir(codec_repo):
             print(f"Detected local codec directory: {codec_repo}")
             try:
@@ -164,70 +137,41 @@ class NeuTTSAir:
                     "'neuphonic/neucodec-onnx-decoder', or a valid local directory path."
                 )
 
-
     def infer(self, text: str, ref_codes: np.ndarray | torch.Tensor, ref_text: str) -> np.ndarray:
-        """
-        Perform inference to generate speech from text using the TTS model and reference audio.
-
-        Args:
-            text (str): Input text to be converted to speech.
-            ref_codes (np.ndarray | torch.tensor): Encoded reference.
-            ref_text (str): Reference text for reference audio. Defaults to None.
-        Returns:
-            np.ndarray: Generated speech waveform.
-        """
-
-        # Generate tokens
+        """Perform inference to generate speech from text."""
         if self._is_quantized_model:
             output_str = self._infer_ggml(ref_codes, ref_text, text)
         else:
             prompt_ids = self._apply_chat_template(ref_codes, ref_text, text)
             output_str = self._infer_torch(prompt_ids)
 
-        # Decode
         wav = self._decode(output_str)
         watermarked_wav = self.watermarker.apply_watermark(wav, sample_rate=24_000)
-
         return watermarked_wav
     
     def infer_stream(self, text: str, ref_codes: np.ndarray | torch.Tensor, ref_text: str) -> Generator[np.ndarray, None, None]:
-        """
-        Perform streaming inference to generate speech from text using the TTS model and reference audio.
-
-        Args:
-            text (str): Input text to be converted to speech.
-            ref_codes (np.ndarray | torch.tensor): Encoded reference.
-            ref_text (str): Reference text for reference audio. Defaults to None.
-        Yields:
-            np.ndarray: Generated speech waveform.
-        """ 
-
+        """Perform streaming inference to generate speech from text."""
         if self._is_quantized_model:
             return self._infer_stream_ggml(ref_codes, ref_text, text)
-
         else:
             raise NotImplementedError("Streaming is not implemented for the torch backend!")
 
     def encode_reference(self, ref_audio_path: str | Path):
+        """Encode reference audio into codes."""
         wav, _ = librosa.load(ref_audio_path, sr=16000, mono=True)
-        wav_tensor = torch.from_numpy(wav).float().unsqueeze(0).unsqueeze(0)  # [1, 1, T]
+        wav_tensor = torch.from_numpy(wav).float().unsqueeze(0).unsqueeze(0)
         with torch.no_grad():
             ref_codes = self.codec.encode_code(audio_or_path=wav_tensor).squeeze(0).squeeze(0)
         return ref_codes
 
     def _decode(self, codes: str):
-
-        # Extract speech token IDs using regex
+        """Decode speech token codes to audio waveform."""
         speech_ids = [int(num) for num in re.findall(r"<\|speech_(\d+)\|>", codes)]
 
         if len(speech_ids) > 0:
-
-            # Onnx decode
             if self._is_onnx_codec:
                 codes = np.array(speech_ids, dtype=np.int32)[np.newaxis, np.newaxis, :]
                 recon = self.codec.decode_code(codes)
-
-            # Torch decode
             else:
                 with torch.no_grad():
                     codes = torch.tensor(speech_ids, dtype=torch.long)[None, None, :].to(
@@ -240,6 +184,7 @@ class NeuTTSAir:
             raise ValueError("No valid speech tokens found in the output.")
 
     def _to_phones(self, text: str) -> str:
+        """Convert text to phonemes."""
         phones = self.phonemizer.phonemize([text])
         phones = phones[0].split()
         phones = " ".join(phones)
@@ -248,7 +193,7 @@ class NeuTTSAir:
     def _apply_chat_template(
         self, ref_codes: list[int], ref_text: str, input_text: str
     ) -> list[int]:
-
+        """Apply chat template for model input."""
         input_text = self._to_phones(ref_text) + " " + self._to_phones(input_text)
         speech_replace = self.tokenizer.convert_tokens_to_ids("<|SPEECH_REPLACE|>")
         speech_gen_start = self.tokenizer.convert_tokens_to_ids("<|SPEECH_GENERATION_START|>")
@@ -266,7 +211,7 @@ class NeuTTSAir:
             + [text_prompt_start]
             + input_ids
             + [text_prompt_end]
-            + ids[text_replace_idx + 1 :]  # noqa
+            + ids[text_replace_idx + 1 :]
         )
 
         speech_replace_idx = ids.index(speech_replace)
@@ -277,6 +222,7 @@ class NeuTTSAir:
         return ids
 
     def _infer_torch(self, prompt_ids: list[int]) -> str:
+        """Perform inference using PyTorch backend."""
         prompt_tensor = torch.tensor(prompt_ids).unsqueeze(0).to(self.backbone.device)
         speech_end_id = self.tokenizer.convert_tokens_to_ids("<|SPEECH_GENERATION_END|>")
         with torch.no_grad():
@@ -297,6 +243,7 @@ class NeuTTSAir:
         return output_str
     
     def _infer_ggml(self, ref_codes: list[int], ref_text: str, input_text: str) -> str:
+        """Perform inference using GGML backend."""
         ref_text = self._to_phones(ref_text)
         input_text = self._to_phones(input_text)
 
@@ -316,6 +263,7 @@ class NeuTTSAir:
         return output_str
 
     def _infer_stream_ggml(self, ref_codes: torch.Tensor, ref_text: str, input_text: str) -> Generator[np.ndarray, None, None]:
+        """Perform streaming inference using GGML backend."""
         ref_text = self._to_phones(ref_text)
         input_text = self._to_phones(input_text)
 
@@ -342,8 +290,6 @@ class NeuTTSAir:
             token_cache.append(output_str)
 
             if len(token_cache[n_decoded_tokens:]) >= self.streaming_frames_per_chunk + self.streaming_lookforward:
-
-                # decode chunk
                 tokens_start = max(
                     n_decoded_tokens
                     - self.streaming_lookback
@@ -369,8 +315,7 @@ class NeuTTSAir:
                 recon = recon[sample_start:sample_end]
                 audio_cache.append(recon)
 
-                # postprocess
-                processed_recon = _linear_overlap_add(
+                processed_recon = linear_overlap_add(
                     audio_cache, stride=self.streaming_stride_samples
                 )
                 new_samples_end = len(audio_cache) * self.streaming_stride_samples
@@ -381,7 +326,7 @@ class NeuTTSAir:
                 n_decoded_tokens += self.streaming_frames_per_chunk
                 yield processed_recon
 
-        # final decoding handled seperately as non-constant chunk size
+        # Final decoding
         remaining_tokens = len(token_cache) - n_decoded_tokens
         if len(token_cache) > n_decoded_tokens:
             tokens_start = max(
@@ -401,6 +346,6 @@ class NeuTTSAir:
             recon = recon[sample_start:]
             audio_cache.append(recon)
 
-            processed_recon = _linear_overlap_add(audio_cache, stride=self.streaming_stride_samples)
+            processed_recon = linear_overlap_add(audio_cache, stride=self.streaming_stride_samples)
             processed_recon = processed_recon[n_decoded_samples:]
             yield processed_recon

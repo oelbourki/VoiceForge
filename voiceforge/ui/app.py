@@ -29,8 +29,7 @@ def create_app(tts_service: TTSService, voice_service: VoiceService) -> gr.Block
     
     # Create app
     with gr.Blocks(
-        title=settings.ui.title,
-        theme=gr.themes.Soft() if settings.ui.theme == "soft" else gr.themes.Default()
+        title=settings.ui.title
     ) as app:
         # Header
         create_header()
